@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SCNBugDefinerX - Advanced Security Scanner</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600&display=swap');
+        :root {
+            --primary: #00ff41;
+            --secondary: #00ffff;
+            --danger: #ff0040;
+            --warning: #ffaa00;
+            --dark: #0d0d0d;
+            --darker: #1a1a1a;
+            --darkest: #0a0a0a;
+            --accent: #ff6b35;
+            --success: #00ff88;
+            --matrix-green: #00ff41;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Fira Code', 'Courier New', monospace;
+            background: linear-gradient(135deg, var(--dark) 0%, var(--darkest) 100%);
+            color: var(--primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+        /* Matrix rain effect */
+        .matrix-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.1;
+            pointer-events: none;
+        }
+        .matrix-column {
+            position: absolute;
+            top: -100px;
+            color: var(--matrix-green);
+            font-size: 14px;
+            font-family: 'Fira Code', monospace;
+            animation: matrix-fall 8s linear infinite;
+        }
+        @keyframes matrix-fall {
+            0% { transform: translateY(-100px); opacity: 1; }
+            100% { transform: translateY(calc(100vh + 100px)); opacity: 0; }
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+        header {
+            text-align: center;
+            border-bottom: 2px solid var(--primary);
+            padding: 30px 0;
+            margin-bottom: 30px;
+            position: relative;
+            background: rgba(13, 13, 13, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            box-shadow: 0 0 30px rgba(0, 255, 65, 0.3);
+        }
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            text-shadow: 0 0 20px var(--primary);
+            animation: glow-pulse 2s ease-in-out infinite alternate;
+        }
+        @keyframes glow-pulse {
+            0% { text-shadow: 0 0 20px var(--primary); }
+            100% { text-shadow: 0 0 30px var(--primary), 0 0 40px var(--primary); }
+        }
+        .brand-primary { color: var(--secondary); }
+        .brand-danger { color: var(--danger); }
+        .subtitle {
+            font-size: 1.1rem;
+            color: var(--secondary);
+            margin-bottom: 10px;
+        }
+        .status-line {
+            font-size: 0.9rem;
+            color: var(--primary);
+            opacity: 0.7;
+            animation: blink 1.5s ease-in-out infinite;
+        }
+        @keyframes blink {
+            0%, 50% { opacity: 0.7; }
+            51%, 100% { opacity: 0.3; }
+        }
+        .card {
+            background: linear-gradient(145deg, rgba(26, 26, 26, 0.95), rgba(10, 10, 10, 0.95));
+            border: 1px solid var(--primary);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 25px;
+            box-shadow: 
+                0 0 20px rgba(0, 255, 65, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 65, 0.1), transparent);
+            transition: left 0.5s ease;
+        }
+        .card:hover::before {
+            left: 100%;
+        }
+        .input-group {
+            margin-bottom: 25px;
+            position: relative;
+        }
+        label {
+            display: block;
+            margin-bottom: 10px;
+            color: var(--secondary);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        input[type="url"] {
+            width: 100%;
+            padding: 15px 20px;
+            background: rgba(10, 10, 10, 0.8);
+            color: var(--primary);
+            border: 2px solid var(--primary);
+            border-radius: 10px;
+            font-family: 'Fira Code', monospace;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        input[type="url"]:focus {
+            outline: none;
+            border-color: var(--secondary);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        button {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(145deg, var(--primary), var(--success));
+            color: var(--dark);
+            border: none;
+            border-radius: 10px;
+            font-family: 'Fira Code', monospace;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+        }
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0, 255, 65, 0.4);
+        }
+        button:disabled {
+            background: linear-gradient(145deg, #333, #222);
+            color: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            background: rgba(10, 10, 10, 0.9);
+            border-radius: 15px;
+            border: 1px solid var(--primary);
+            position: relative;
+            overflow: hidden;
+        }
+        .terminal-output {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid var(--primary);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            font-family: 'Fira Code', monospace;
+            font-size: 14px;
+            max-height: 200px;
+            overflow-y: auto;
+            color: var(--primary);
+            text-align: left;
+        }
+        .scan-line {
+            margin: 5px 0;
+            opacity: 0;
+            animation: fadeInUp 0.5s ease forwards;
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .spinner {
+            border: 4px solid rgba(0, 255, 65, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid var(--primary);
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(0, 255, 65, 0.2);
+            border-radius: 3px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary), var(--primary));
+            border-radius: 3px;
+            width: 0%;
+            animation: progress 3s ease-in-out forwards;
+        }
+        @keyframes progress {
+            0% { width: 0%; }
+            25% { width: 30%; }
+            50% { width: 65%; }
+            75% { width: 85%; }
+            100% { width: 100%; }
+        }
+        .score-card {
+            text-align: center;
+            padding: 40px;
+            background: radial-gradient(circle at center, rgba(0, 255, 65, 0.1), transparent);
+            border-radius: 15px;
+        }
+        .score {
+            font-size: 5rem;
+            font-weight: bold;
+            margin: 30px 0;
+            text-shadow: 0 0 30px currentColor;
+            animation: scoreReveal 1s ease-out;
+        }
+        @keyframes scoreReveal {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .score-excellent { color: var(--success); }
+        .score-good { color: #90EE90; }
+        .score-fair { color: var(--warning); }
+        .score-poor { color: var(--danger); }
+        .vulnerability {
+            border-left: 4px solid var(--danger);
+            padding: 20px;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, rgba(255, 0, 64, 0.1), rgba(255, 0, 64, 0.05));
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+            animation: slideInLeft 0.5s ease-out;
+        }
+        @keyframes slideInLeft {
+            from { transform: translateX(-100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .severity-critical { 
+            border-color: var(--danger);
+            box-shadow: 0 0 15px rgba(255, 0, 64, 0.3);
+        }
+        .severity-high { border-color: #ff8000; }
+        .severity-medium { border-color: var(--warning); }
+        .severity-low { border-color: #0080ff; }
+        .severity-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-right: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .badge-critical { 
+            background: linear-gradient(135deg, var(--danger), #ff6b35);
+            color: white;
+            box-shadow: 0 0 15px rgba(255, 0, 64, 0.5);
+        }
+        .badge-high { background: linear-gradient(135deg, #ff8000, #ffaa00); color: white; }
+        .badge-medium { background: linear-gradient(135deg, var(--warning), #ffd700); color: black; }
+        .badge-low { background: linear-gradient(135deg, #0080ff, #00aaff); color: white; }
+        .vuln-title {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+        .vuln-category {
+            color: var(--secondary);
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+        .vuln-description {
+            margin-bottom: 15px;
+        }
+        .remediation-title {
+            color: var(--secondary);
+            margin: 15px 0 10px;
+        }
+        .remediation-list {
+            padding-left: 20px;
+        }
+        .remediation-list li {
+            margin-bottom: 5px;
+        }
+        .disclaimer {
+            background: linear-gradient(135deg, rgba(255, 0, 64, 0.2), rgba(255, 0, 64, 0.1));
+            border: 2px solid var(--danger);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+            font-size: 0.95rem;
+            position: relative;
+            animation: warningPulse 3s ease-in-out infinite;
+        }
+        @keyframes warningPulse {
+            0%, 100% { border-color: var(--danger); }
+            50% { border-color: var(--accent); }
+        }
+        footer {
+            text-align: center;
+            padding: 30px;
+            border-top: 2px solid var(--primary);
+            margin-top: 40px;
+            color: #808080;
+            background: rgba(13, 13, 13, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+        }
+        .footer-link {
+            color: var(--secondary);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        .footer-link:hover {
+            color: var(--primary);
+            text-shadow: 0 0 10px var(--primary);
+        }
+        @media (max-width: 768px) {
+            .container { padding: 15px; }
+            h1 { font-size: 2.5rem; }
+            .score { font-size: 4rem; }
+            .card { padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="matrix-bg" id="matrixBg"></div>
+    <div class="container">
+        <header>
+            <h1><span class="brand-primary">SCN</span>BugDefiner<span class="brand-danger">X</span></h1>
+            <p class="subtitle">Advanced Penetration Testing Suite</p>
+            <div class="status-line">[ SYSTEM ONLINE ] - [ READY FOR DEPLOYMENT ]</div>
+        </header>
+        <div class="disclaimer">
+            ⚠️ AUTHORIZED PERSONNEL ONLY - This is a demonstration tool. Real penetration testing requires proper authorization.
+        </div>
+        <div class="card">
+            <h2>🔍 TARGET ACQUISITION MODULE</h2>
+            <div class="input-group">
+                <label for="urlInput">TARGET URL</label>
+                <input type="url" id="urlInput" placeholder="https://target-domain.com" />
+            </div>
+            <button id="scanButton">🚀 INITIATE DEEP SCAN</button>
+        </div>
+        <div id="loading" class="loading" style="display: none;">
+            <div class="spinner"></div>
+            <h3>🔍 PENETRATION SCAN IN PROGRESS</h3>
+            <div class="progress-bar">
+                <div class="progress-fill"></div>
+            </div>
+            <div class="terminal-output" id="terminalOutput"></div>
+        </div>
+        <div id="results"></div>
+        <footer>
+            <p>⚡ Powered by Sachin | Elite Cybersecurity Framework | 
+                <a href="https://www.linkedin.com/in/sachin-pradhan-ba82a927a?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app" 
+                   target="_blank" 
+                   class="footer-link">
+                    LinkedIn Profile
+                </a>
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        // Matrix rain effect
+        function createMatrixRain() {
+            const matrixBg = document.getElementById('matrixBg');
+            const chars = '0123456789ABCDEF';
+            const columns = Math.floor(window.innerWidth / 20);
+            for (let i = 0; i < columns; i++) {
+                const column = document.createElement('div');
+                column.className = 'matrix-column';
+                column.style.left = i * 20 + 'px';
+                column.style.animationDelay = Math.random() * 8 + 's';
+                let text = '';
+                for (let j = 0; j < Math.floor(Math.random() * 20) + 10; j++) {
+                    text += chars[Math.floor(Math.random() * chars.length)] + '<br>';
+                }
+                column.innerHTML = text;
+                matrixBg.appendChild(column);
+            }
+        }
+        createMatrixRain();
+
+        const scanMessages = [
+            '[INFO] Initializing penetration testing framework...',
+            '[INFO] Loading vulnerability signatures...',
+            '[INFO] Establishing secure connection...',
+            '[INFO] Performing reconnaissance...',
+            '[SCAN] Testing for SQL injection vulnerabilities...',
+            '[SCAN] Analyzing HTTP security headers...',
+            '[SCAN] Checking for XSS vulnerabilities...',
+            '[SCAN] Testing authentication mechanisms...',
+            '[SCAN] Scanning for outdated components...',
+            '[SCAN] Analyzing SSL/TLS configuration...',
+            '[SCAN] Checking for directory traversal...',
+            '[SCAN] Testing for CSRF vulnerabilities...',
+            '[INFO] Compiling vulnerability report...',
+            '[SUCCESS] Scan completed successfully!'
+        ];
+
+        function displayResults(result) {
+            const resultsDiv = document.getElementById('results');
+            
+            // Handle error response
+            if (result.error) {
+                resultsDiv.innerHTML = `
+                    <div class="card">
+                        <h3 style="color: var(--danger);">❌ SCAN FAILED</h3>
+                        <p><strong>Error:</strong> ${result.error}</p>
+                        ${result.allowed_domains ? 
+                            '<p style="margin-top: 10px; font-size: 0.9rem;"><strong>Allowed domains:</strong><br>' + 
+                            result.allowed_domains.join('<br>') + '</p>' : ''}
+                        <p style="margin-top: 10px; color: var(--warning);">
+                            ⚠️ Only educational targets permitted
+                        </p>
+                    </div>
+                `;
+                return;
+            }
+
+            const scoreClass = getScoreClass(result.overall_score);
+            const scoreLabel = getScoreLabel(result.overall_score);
+            
+            let html = `
+                <div class="card">
+                    <h2>🎯 PENETRATION TEST COMPLETE</h2>
+                    <div class="score-card">
+                        <div class="score ${scoreClass}">${result.overall_score}%</div>
+                        <p><strong>SECURITY RATING: ${scoreLabel}</strong></p>
+                        <p>Scan duration: ${result.scan_time}s | Deep analysis complete</p>
+                    </div>
+            `;
+
+            if (result.vulnerabilities && result.vulnerabilities.length > 0) {
+                const severityCount = { Critical: 0, High: 0, Medium: 0, Low: 0 };
+                result.vulnerabilities.forEach(v => {
+                    if (v.severity in severityCount) severityCount[v.severity]++;
+                });
+
+                html += `
+                    <h3>🔍 VULNERABILITIES DISCOVERED (${result.vulnerabilities.length})</h3>
+                    <div style="display: flex; justify-content: center; margin: 15px 0;">
+                        <div style="background: rgba(255,0,64,0.1); padding: 10px; border-radius: 10px; width: 100%; max-width: 500px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                <span style="color: var(--danger);">🔴 Critical: ${severityCount.Critical}</span>
+                                <span style="color: #ff8000;">🟠 High: ${severityCount.High}</span>
+                                <span style="color: var(--warning);">🟡 Medium: ${severityCount.Medium}</span>
+                                <span style="color: #0080ff;">🔵 Low: ${severityCount.Low}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                result.vulnerabilities.forEach((vuln, index) => {
+                    const severityClass = `severity-${vuln.severity.toLowerCase()}`;
+                    const badgeClass = `badge-${vuln.severity.toLowerCase()}`;
+                    
+                    html += `
+                        <div class="vulnerability ${severityClass}" style="animation-delay: ${index * 0.1}s;">
+                            <div class="vuln-title">
+                                <span class="severity-badge ${badgeClass}">${vuln.severity}</span>
+                                ${vuln.title}
+                            </div>
+                            <div class="vuln-category">📂 Category: ${vuln.category}</div>
+                            <div class="vuln-description">${vuln.description}</div>
+                            <div><strong>🎯 Location:</strong> ${vuln.location}</div>
+                            ${vuln.evidence ? `<div><strong>🔍 Evidence:</strong> ${vuln.evidence}</div>` : ''}
+                    `;
+
+                    if (vuln.remediation && vuln.remediation.length > 0) {
+                        html += `
+                            <div class="remediation-title">🔧 Remediation Steps:</div>
+                            <ul class="remediation-list">
+                                ${vuln.remediation.map(step => `<li>${step}</li>`).join('')}
+                            </ul>
+                        `;
+                    }
+
+                    if (vuln.references && vuln.references.length > 0) {
+                        html += `
+                            <div class="remediation-title">📚 References:</div>
+                            <ul class="remediation-list">
+                                ${vuln.references.map(ref => 
+                                    `<li><a href="${ref}" target="_blank" style="color: var(--secondary);">${ref}</a></li>`
+                                ).join('')}
+                            </ul>
+                        `;
+                    }
+
+                    html += `</div>`;
+                });
+            } else {
+                html += `
+                    <div style="text-align: center; color: var(--success); padding: 40px;">
+                        <h3>✅ SECURITY ASSESSMENT PASSED</h3>
+                        <p>No critical vulnerabilities detected in target system</p>
+                        <p style="color: var(--secondary); margin-top: 10px;">Continuous monitoring recommended</p>
+                    </div>
+                `;
+            }
+
+            html += `</div>`;
+            resultsDiv.innerHTML = html;
+        }
+
+        function getScoreClass(score) {
+            if (score >= 80) return 'score-excellent';
+            if (score >= 60) return 'score-good';
+            if (score >= 40) return 'score-fair';
+            return 'score-poor';
+        }
+
+        function getScoreLabel(score) {
+            if (score >= 80) return 'EXCELLENT';
+            if (score >= 60) return 'SECURE';
+            if (score >= 40) return 'MODERATE RISK';
+            return 'HIGH RISK';
+        }
+
+        async function scanWebsite() {
+            const urlInput = document.getElementById('urlInput');
+            const resultsDiv = document.getElementById('results');
+            const loadingDiv = document.getElementById('loading');
+            const scanButton = document.getElementById('scanButton');
+            const terminalOutput = document.getElementById('terminalOutput');
+            const url = urlInput.value.trim();
+
+            if (!url) {
+                alert('⚠️ Please enter a target URL');
+                return;
+            }
+
+            // Show loading
+            loadingDiv.style.display = 'block';
+            scanButton.disabled = true;
+            resultsDiv.innerHTML = '';
+            terminalOutput.innerHTML = '';
+
+            try {
+                // Animate terminal output
+                for (let i = 0; i < scanMessages.length; i++) {
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                    const line = document.createElement('div');
+                    line.className = 'scan-line';
+                    line.style.animationDelay = '0s';
+                    line.textContent = scanMessages[i];
+                    terminalOutput.appendChild(line);
+                    terminalOutput.scrollTop = terminalOutput.scrollHeight;
+                }
+
+                // 🔥 Connect to your deployed backend
+                // Replace with your actual Render URL when deployed
+                const API_BASE = 'https://scnbugdefinerx-backend.onrender.com';
+                
+                const response = await fetch(`${API_BASE}/scan`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url })
+                });
+
+                const result = await response.json();
+                displayResults(result);
+
+            } catch (error) {
+                console.error('Scan error:', error);
+                resultsDiv.innerHTML = `
+                    <div class="card" style="border-color: var(--danger);">
+                        <h3 style="color: var(--danger);">❌ SCAN FAILED</h3>
+                        <p><strong>Error:</strong> Unable to connect to security scanner</p>
+                        <p>Please ensure the backend is deployed at 
+                           <a href="https://scnbugdefinerx-backend.onrender.com" target="_blank" 
+                              style="color: var(--secondary);">
+                              scnbugdefinerx-backend.onrender.com
+                           </a>
+                        </p>
+                        <p style="margin-top: 10px; font-size: 0.9rem;">
+                            <strong>Troubleshooting:</strong><br>
+                            1. Deploy backend on Render using render.yaml<br>
+                            2. Wait 3-5 minutes for deployment<br>
+                            3. Update API_BASE in index.html
+                        </p>
+                    </div>
+                `;
+            } finally {
+                loadingDiv.style.display = 'none';
+                scanButton.disabled = false;
+            }
+        }
+
+        // Event listener
+        document.getElementById('scanButton').addEventListener('click', scanWebsite);
+
+        // Console branding
+        console.log('%c🔒 SCNBugDefinerX Security Scanner Initialized', 'color: #00ff41; font-family: monospace; font-size: 14px;');
+        console.log('%c⚠️  Unauthorized access is prohibited', 'color: #ff0040; font-family: monospace; font-size: 12px;');
+    </script>
+</body>
+</html>
