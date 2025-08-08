@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: scnbugdefinerx-backend
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn main:app -b 0.0.0.0:$PORT
+    envVars:
+      - key: PORT
+        value: 10000
