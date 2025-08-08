@@ -6,6 +6,7 @@ import re
 from urllib.parse import urljoin, urlparse
 import os
 import json
+import time
 
 app = Flask(__name__)
 
@@ -44,6 +45,7 @@ def health():
 @app.route('/scan', methods=['POST'])
 def scan():
     """Main scanning endpoint"""
+    start_time = time.time()
     data = request.get_json()
     url = data.get('url', '').strip()
 
@@ -262,7 +264,7 @@ def scan():
                 match = re.search(pattern, src, re.I)
                 if match:
                     version = match.group(1)
-                    if version and is_version_vulnerable(version, min_version):
+                    if version and is_version_older_than(version, min_version):
                         findings.append({
                             "id": f"outdated-{lib_name}",
                             "title": f"Outdated {lib_name.capitalize()} Detected (v{version})",
@@ -393,12 +395,13 @@ def scan():
         elif finding["severity"] == "Low": score -= 2
     
     score = max(0, min(100, round(score)))
+    scan_duration = time.time() - start_time
 
     return jsonify({
         "url": final_url,
         "overall_score": score,
         "vulnerabilities": findings,
-        "scan_time": 4.2,
+        "scan_time": round(scan_duration, 2),
         "disclaimer": "This is a passive security assessment. No destructive testing was performed.",
         "scan_details": {
             "cookies_found": len(cookies),
@@ -408,8 +411,8 @@ def scan():
         }
     })
 
-def is_version_vulnerable(current, minimum):
-    """Compare versions to check if current version is vulnerable"""
+def is_version_older_than(current, minimum):
+    """Compare versions to check if current version is older than minimum"""
     try:
         current_parts = list(map(int, (current.split('.') + [0,0,0])[:3]))
         min_parts = list(map(int, (minimum.split('.') + [0,0,0])[:3]))

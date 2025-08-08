@@ -600,11 +600,10 @@
                     terminalOutput.scrollTop = terminalOutput.scrollHeight;
                 }
 
-                // 🔥 Connect to your deployed backend
-                // Replace with your actual Render URL when deployed
-                const API_BASE = 'https://scnbugdefinerx-backend.onrender.com';
-                
-                const response = await fetch(`${API_BASE}/scan`, {
+                // 🔥 Connect to the backend
+                const API_BASE = ''; // Use relative path for local dev
+
+                const response = await fetch(`/scan`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ url })
@@ -618,18 +617,11 @@
                 resultsDiv.innerHTML = `
                     <div class="card" style="border-color: var(--danger);">
                         <h3 style="color: var(--danger);">❌ SCAN FAILED</h3>
-                        <p><strong>Error:</strong> Unable to connect to security scanner</p>
-                        <p>Please ensure the backend is deployed at 
-                           <a href="https://scnbugdefinerx-backend.onrender.com" target="_blank" 
-                              style="color: var(--secondary);">
-                              scnbugdefinerx-backend.onrender.com
-                           </a>
-                        </p>
+                        <p><strong>Error:</strong> Unable to connect to the backend scanner.</p>
                         <p style="margin-top: 10px; font-size: 0.9rem;">
                             <strong>Troubleshooting:</strong><br>
-                            1. Deploy backend on Render using render.yaml<br>
-                            2. Wait 3-5 minutes for deployment<br>
-                            3. Update API_BASE in index.html
+                            1. Make sure the Python backend is running.<br>
+                            2. Check the browser's developer console for network errors.
                         </p>
                     </div>
                 `;
