@@ -68,7 +68,6 @@ def scan():
     headers = {}
     html = ""
     final_url = url
-    cookies = {}
 
     try:
         # Configure session for better scanning
@@ -87,7 +86,6 @@ def scan():
         final_url = response.url
         headers = dict(response.headers)
         html = response.text
-        cookies = dict(response.cookies)
         soup = BeautifulSoup(html, 'html.parser')
 
         # 1. 🔐 Security Headers Check
@@ -338,28 +336,28 @@ def scan():
             })
 
         # 6. 🔐 Cookie Security
-        for cookie_name, cookie in cookies.items():
+        for cookie in response.cookies:
             if not cookie.secure and final_url.startswith('https'):
                 findings.append({
-                    "id": f"cookie-secure-{cookie_name}",
-                    "title": f"Cookie '{cookie_name}' Missing Secure Flag",
+                    "id": f"cookie-secure-{cookie.name}",
+                    "title": f"Cookie '{cookie.name}' Missing Secure Flag",
                     "severity": "Medium",
                     "category": "Session Management",
-                    "description": f"Cookie '{cookie_name}' is transmitted over HTTP and HTTPS, vulnerable to interception.",
+                    "description": f"Cookie '{cookie.name}' is transmitted over HTTP and HTTPS, vulnerable to interception.",
                     "location": "Cookie Header",
                     "remediation": [
                         "Add Secure flag to cookie",
                         "Ensure cookies are only sent over HTTPS"
                     ]
                 })
-                
-            if not cookie.httponly:
+
+            if not getattr(cookie, 'httponly', False):
                 findings.append({
-                    "id": f"cookie-httponly-{cookie_name}",
-                    "title": f"Cookie '{cookie_name}' Missing HttpOnly Flag",
+                    "id": f"cookie-httponly-{cookie.name}",
+                    "title": f"Cookie '{cookie.name}' Missing HttpOnly Flag",
                     "severity": "Medium",
                     "category": "Session Management",
-                    "description": f"Cookie '{cookie_name}' is accessible via JavaScript, vulnerable to XSS theft.",
+                    "description": f"Cookie '{cookie.name}' is accessible via JavaScript, vulnerable to XSS theft.",
                     "location": "Cookie Header",
                     "remediation": [
                         "Add HttpOnly flag to cookie",
@@ -404,9 +402,9 @@ def scan():
         "scan_time": round(scan_duration, 2),
         "disclaimer": "This is a passive security assessment. No destructive testing was performed.",
         "scan_details": {
-            "cookies_found": len(cookies),
-            "forms_found": len(forms),
-            "scripts_found": len(scripts),
+            "cookies_found": len(response.cookies),
+            "forms_found": len(forms) if 'forms' in locals() else 0,
+            "scripts_found": len(scripts) if 'scripts' in locals() else 0,
             "redirects_followed": len(response.history) if 'response' in locals() else 0
         }
     })
